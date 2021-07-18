@@ -253,7 +253,7 @@ class MapCtrl {
       }
       console.log(JSON.stringify(serialized));
       const b64 = btoa(JSON.stringify(serialized));
-      history.pushState(serialized, "Serialized Data", `/?share=${b64}`)
+      history.pushState(serialized, "Serialized Data", `?share=${b64}`)
       return b64;
     }
     async deserializeFromLink(data_) {

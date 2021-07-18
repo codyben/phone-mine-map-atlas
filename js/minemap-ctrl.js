@@ -141,7 +141,7 @@ class MineMap {
 class MapCtrl {
     constructor(root, reseter, center = [41.245883, -75.881826]) {
       console.log(reseter)
-      this.layerMapP = fetch("/layerMaps/layers.json").then(r => {
+      this.layerMapP = fetch("layerMaps/layers.json").then(r => {
         if(!r.ok) {
           throw Error;
         }

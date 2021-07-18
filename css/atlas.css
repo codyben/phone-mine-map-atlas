@@ -1,0 +1,26 @@
+#minemap {
+	width: 100vw;
+	height: 100vh;
+}
+
+body {
+	margin: 0;
+}
+
+.map-listing {
+	height: 216px;
+	overflow-y: scroll;
+}
+
+.opacity-control a {
+	background-image: url("/plugins/opacity/opacity.png");
+	background-size: cover;
+}
+
+.social-bar {
+	background-color: #eaeaeaa6;
+}
+
+.prev {
+	cursor: pointer;
+}

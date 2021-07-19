@@ -47,18 +47,25 @@
 
 			function reset(map) {
 				map.map.remove();
-				myMap = new MapCtrl(document.getElementById("minemap"), this);
+				myMap = new MapCtrl(document.getElementById("minemap"), reset);
 				const search = new URLSearchParams(window.location.search);
 				if(search.has("share")) {
 					console.log("here")
 					myMap.deserializeFromLink(search.get("share"));
 				}
 			}
+
 			myMap = new MapCtrl(document.getElementById("minemap"), reset);
 			const search = new URLSearchParams(window.location.search);
 			if(search.has("share")) {
 				console.log("here")
 				myMap.deserializeFromLink(search.get("share"));
+			}
+			window.onpopstate = (event) => {
+				myMap.map.remove();
+				myMap = new MapCtrl(document.getElementById("minemap"), reset);
+				console.log("swapping from history");
+				myMap.deserializeFromLink(event.state);
 			}
 		</script>
 	</div>

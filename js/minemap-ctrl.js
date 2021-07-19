@@ -22,6 +22,7 @@ class MineMap {
             layers: this.layerId,
             transparent: true,
             format: 'image/png',
+            maxZoom: 20
           });
           this.layer._minemapname = this.WMSName;
           this.WMSURL = WMSUrl;
@@ -124,12 +125,14 @@ class MineMap {
     return container.outerHTML;
     }
 
-    addLayer() {
+    addLayer(s=true) {
       this.control.addLayer(this);
+      if(s) this.control.serializeToLink();
     }
 
     removeLayer() {
       this.control.removeLayer(this);
+      this.control.serializeToLink();
     }
 
     opacity(val) {
@@ -140,7 +143,7 @@ class MineMap {
 }
 class MapCtrl {
     constructor(root, reseter, center = [41.245883, -75.881826]) {
-      console.log(reseter)
+
       this.layerMapP = fetch("layerMaps/layers.json").then(r => {
         if(!r.ok) {
           throw Error;
@@ -148,12 +151,13 @@ class MapCtrl {
         return r.json()
       })
         this.map = L.map(root).setView(center, 13);
+        this.map.setMaxBounds([[40.094882, -78.945007], [42.108411, -73.67157]]);
         this.accessTokenDefault = "pk.eyJ1IjoiYmVuY29keW9za2kiLCJhIjoiY2s1c2s0Y2JmMHA2bzNrbzZ5djJ3bDdscyJ9.7MuHmoSKO5zAgY0IKChI8w";
         this.tileDefault = "satellite-v9";
         this.defaultURL = `https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}`
         this.layerDefault = L.tileLayer(this.defaultURL, {
-            attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, Imagery © <a href="https://www.mapbox.com/">Mapbox</a>',
-            maxZoom: 18,
+            attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, Imagery © <a href="https://www.mapbox.com/">Mapbox</a>, MineMaps &copy; of their respective owners.',
+            maxZoom: 20,
             id: 'mapbox/streets-v11',
             tileSize: 512,
             zoomOffset: -1,
@@ -174,40 +178,40 @@ class MapCtrl {
         const baselayerOptions = {
           "Mapbox Light Road": this.layerDefault,
           "Mapbox Outdoor Topo": L.tileLayer(this.defaultURL, {
-            attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, Imagery © <a href="https://www.mapbox.com/">Mapbox</a>',
-            maxZoom: 18,
+            attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, Imagery © <a href="https://www.mapbox.com/">Mapbox</a>, MineMaps &copy; of their respective owners.',
+            maxZoom: 20,
             id: 'mapbox/outdoors-v11',
             tileSize: 512,
             zoomOffset: -1,
             accessToken: this.accessTokenDefault
         }),
         "Mapbox Dark": L.tileLayer(this.defaultURL, {
-          attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, Imagery © <a href="https://www.mapbox.com/">Mapbox</a>',
-          maxZoom: 18,
+          attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, Imagery © <a href="https://www.mapbox.com/">Mapbox</a>, MineMaps &copy; of their respective owners.',
+          maxZoom: 20,
           id: 'mapbox/dark-v10',
           tileSize: 512,
           zoomOffset: -1,
           accessToken: this.accessTokenDefault,
       }), 
       "Mapbox Light Terrain": L.tileLayer(this.defaultURL, {
-        attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, Imagery © <a href="https://www.mapbox.com/">Mapbox</a>',
-        maxZoom: 18,
+        attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, Imagery © <a href="https://www.mapbox.com/">Mapbox</a>, MineMaps &copy; of their respective owners.',
+        maxZoom: 20,
         id: 'bencodyoski/ckr83q1y1282a17qla18bqunh',
         tileSize: 512,
         zoomOffset: -1,
         accessToken: this.accessTokenDefault
       }),
       "Mapbox Satellite": L.tileLayer(this.defaultURL, {
-        attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, Imagery © <a href="https://www.mapbox.com/">Mapbox</a>',
-        maxZoom: 18,
+        attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, Imagery © <a href="https://www.mapbox.com/">Mapbox</a>, MineMaps &copy; of their respective owners.',
+        maxZoom: 20,
         id: 'mapbox/satellite-streets-v11',
         tileSize: 512,
         zoomOffset: -1,
         accessToken: this.accessTokenDefault
       }),
       "Mapbox Blueprint": L.tileLayer(this.defaultURL, {
-        attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, Imagery © <a href="https://www.mapbox.com/">Mapbox</a> Map creator: Amy Lee Walton',
-        maxZoom: 18,
+        attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, Imagery © <a href="https://www.mapbox.com/">Mapbox</a> Map style creator: Amy Lee Walton, MineMaps &copy; of their respective owners.',
+        maxZoom: 20,
         id: 'bencodyoski/ckr8cw2fg15ku17pfyfvt8rju',
         tileSize: 512,
         zoomOffset: -1,
@@ -253,7 +257,7 @@ class MapCtrl {
       }
       console.log(JSON.stringify(serialized));
       const b64 = btoa(JSON.stringify(serialized));
-      history.pushState(serialized, "Serialized Data", `?share=${b64}`)
+      history.pushState(b64, "Serialized Data", `?share=${b64}`)
       return b64;
     }
     async deserializeFromLink(data_) {
@@ -272,10 +276,10 @@ class MapCtrl {
         for(const meta of overlays) {
           console.log(meta);
           const [attributes, id] = meta;
-          new MineMap(attributes, this.map, id, this).addLayer();
+          new MineMap(attributes, this.map, id, this).addLayer(false);
 
         }
-
+        
     }
 
     addMapControls() {
@@ -292,7 +296,8 @@ class MapCtrl {
 
             container.innerHTML = `<nav class="nav nav-pills flex-column flex-sm-row social-bar">
             <a class="flex-sm-fill text-sm-center nav-link prev map-share" aria-current="page" >Share</a>
-            <a class="flex-sm-fill text-sm-center nav-link prev map-clear">Clear Map</a>
+            <a class="flex-sm-fill text-sm-center nav-link prev map-clear">Original Map</a>
+            <a class="flex-sm-fill text-sm-center nav-link prev map-reset">Reset Map</a>
             <a class="flex-sm-fill text-sm-center nav-link prev" href="#">About</a>
           </nav>`
     
@@ -325,6 +330,16 @@ class MapCtrl {
       for(const clear of clears) {
         clear.onclick = (e) => {
           e.stopPropagation();
+          this.reset();
+        };
+      }
+
+      const resets = document.getElementsByClassName("map-reset");
+      for(const reset of resets) {
+        reset.onclick = (e) => {
+          e.stopPropagation();
+          const url = new URL(window.location.href);
+          history.pushState({}, "Home", `${url.origin}${url.pathname}`);
           this.reset();
         };
       }
@@ -464,13 +479,17 @@ class MapCtrl {
         popup.setContent(`<div class="spinner-grow text-primary" role="status">
         <span class="visually-hidden">Loading...</span>
       </div>`);
-      popup.addTo(this.map);
+        popup.addTo(this.map);
+        const container = document.createElement("div");
+        container.classList.add("scrollable");
+        container.textContent = `${lat}°, ${lng}°`
         const lg = document.createElement("ol");
         lg.classList.add("list-group", "map-listing");
         for await(const r of results) {
           (await r).addToPopup(lg);
         }
-        popup.setContent(lg);
+        container.appendChild(lg);
+        popup.setContent(container);
 
 
       }

@@ -13,7 +13,7 @@ body {
 }
 
 .opacity-control a {
-	background-image: url("plugins/opacity/opacity.png");
+	background-image: url("../plugins/opacity/opacity.png");
 	background-size: cover;
 }
 

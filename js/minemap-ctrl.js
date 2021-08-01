@@ -476,22 +476,61 @@ class MapCtrl {
         const [lat, lng] = [e.latlng.lat, e.latlng.lng];
         const results = this.getMapsAtLocation(lat, lng);
         popup.setLatLng(e.latlng);
-        popup.setContent(`<div class="spinner-grow text-primary" role="status">
+        popup.setContent(`<div class="spinner-grow text-secondary" role="status">
         <span class="visually-hidden">Loading...</span>
       </div>`);
         popup.addTo(this.map);
         const container = document.createElement("div");
         container.classList.add("scrollable");
-        container.textContent = `${lat}°, ${lng}°`
+        // container.textContent = `${lat}°, ${lng}°`
+        container.innerHTML = `<nav class="navbar navbar-light bg-light">
+        <form class="form-inline">
+          <input id="mine-map-search" class="form-control mr-sm-2" type="search" placeholder="Search By Name" aria-label="Search">
+        </form>
+      </nav>`;
         const lg = document.createElement("ol");
         lg.classList.add("list-group", "map-listing");
+        lg.id = "mine-map-listing";
+        this.mapsFound = [];
         for await(const r of results) {
-          (await r).addToPopup(lg);
+          const resolved = await r;
+          this.mapsFound.push(resolved);
+          resolved.addToPopup(lg);
         }
         container.appendChild(lg);
+        const advancedModal = document.createElement("div");
+        advancedModal.textContent = `${lat}°, ${lng}°`;
+        advancedModal.id = "coordinates";
+        container.appendChild(advancedModal);
         popup.setContent(container);
+        const searchHandler = (e) => this.filterMaps(e.target.value);
+        const search = document.getElementById("mine-map-search");
+        //https://stackoverflow.com/questions/574941/best-way-to-track-onchange-as-you-type-in-input-type-text
+        search.onkeypress = search.onpaste = search.oninput = searchHandler;
+      }
 
+      filterMaps(term) {
+        const lg = document.getElementById("mine-map-listing");
+        if(this.mapsFound && term) {
 
+          console.log("begin")
+          const results = this.mapsFound.filter(((map) => map.sheet.includes(term)));
+          console.log("end")
+          while (lg.firstChild) lg.removeChild(lg.firstChild);
+          if(results) {
+
+            for(const map of results) {
+              map.addToPopup(lg);
+            }
+          } else {
+            lg.textContent = `No results for term: ${term}`;
+          }
+        } else {
+          while (lg.firstChild) lg.removeChild(lg.firstChild);
+          for(const map of this.mapsFound) {
+            map.addToPopup(lg);
+          }
+        }
       }
   
       locationOnRequest(e) {

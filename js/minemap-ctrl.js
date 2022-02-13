@@ -46,12 +46,17 @@ class MineMap {
         const name = document.createElement("div");
         name.classList.add("fw-bold");
         const add = document.createElement("span");
+        const save = document.createElement("span");
+        save.classList.add("btn", "btn-secondary", "btn-sm");
+        save.onclick = () => this.control.bookmarkMap(this);
+        save.textContent = "Bookmark";
         add.classList.add("btn", this.ok ? "btn-primary" : "disabled", "btn-sm");
         add.textContent = this.ok ? "Add" : "N/A";
         add.addEventListener("click", () => this.addLayer());
         name.appendChild(phummis);
         container.appendChild(name);
-        container.appendChild(add)
+        container.appendChild(add);
+        container.appendChild(save);
         li.appendChild(container);
         this.memoized = li;
       }
@@ -141,6 +146,7 @@ class MineMap {
 
 
 }
+
 class MapCtrl {
     constructor(root, reseter, center = [41.245883, -75.881826]) {
 
@@ -150,7 +156,10 @@ class MapCtrl {
         }
         return r.json()
       })
-        this.map = L.map(root).setView(center, 13);
+        this.map = L.map(root, {
+          renderer: L.canvas()
+        }).setView(center, 13);
+        L.control.bigImage().addTo(this.map);
         this.map.setMaxBounds([[40.094882, -78.945007], [42.108411, -73.67157]]);
         this.accessTokenDefault = "pk.eyJ1IjoiYmVuY29keW9za2kiLCJhIjoiY2s1c2s0Y2JmMHA2bzNrbzZ5djJ3bDdscyJ9.7MuHmoSKO5zAgY0IKChI8w";
         this.tileDefault = "satellite-v9";
@@ -167,7 +176,7 @@ class MapCtrl {
         this.layerDefault.addTo(this.map);
         this.currentLayer = this.layerDefault;
         this.registerHandlers()
-        https://api.mapbox.com/styles/v1/bencodyoski/ckr83q1y1282a17qla18bqunh/tiles/256/{z}/{x}/{y}@2x?access_token=pk.eyJ1IjoiYmVuY29keW9za2kiLCJhIjoiY2s1c2s0Y2JmMHA2bzNrbzZ5djJ3bDdscyJ9.7MuHmoSKO5zAgY0IKChI8w
+        //https://api.mapbox.com/styles/v1/bencodyoski/ckr83q1y1282a17qla18bqunh/tiles/256/{z}/{x}/{y}@2x?access_token=pk.eyJ1IjoiYmVuY29keW9za2kiLCJhIjoiY2s1c2s0Y2JmMHA2bzNrbzZ5djJ3bDdscyJ9.7MuHmoSKO5zAgY0IKChI8w
         //STATUS FLAGS
         this.mineMapActive = null;
         this.mineMapVisible = null;
@@ -282,6 +291,53 @@ class MapCtrl {
         
     }
 
+    bookmarkMap(minemap) {
+      const name = minemap.WMSName;
+      window.localStorage.setItem(name, JSON.stringify(minemap.serialize()));
+    }
+
+    removeBookmark(minemap) {
+      const name = minemap.WMSName;
+      window.localStorage.removeItem(name);
+      this.populateBookmarks();
+    }
+
+    removeBookmarkByName(name) {
+      window.localStorage.removeItem(name);
+      this.populateBookmarks();
+    }
+
+    getBookmarks() {
+      return Object.keys(window.localStorage);
+    }
+
+    populateBookmarks() {
+      const old = document.getElementById("bookmark-bar");
+      if(old) old.remove();
+      const bookmarks = this.getBookmarks();
+      let bookmark_str = "";
+      bookmarks.forEach(bookmark => {
+        bookmark_str += `<li class="list-group-item"><a onclick="myMap.bookmarkToLayer('${bookmark}')" href="#">${bookmark}</a> <i onclick="myMap.removeBookmarkByName('${bookmark}')" class="fas fa-trash bookmarked"></i></li>`
+      });
+      const lg = document.createElement("ul");
+      lg.classList.add("list-group");
+      lg.id = "bookmark-bar";
+      lg.innerHTML = bookmark_str;
+
+      const social_bar = document.getElementsByClassName("social-bar")[0];
+      social_bar.parentElement.appendChild(lg);
+
+    }
+
+    bookmarkToLayer(bookmark) {
+      const [attr, id] = JSON.parse(window.localStorage.getItem(bookmark));
+      console.log([attr, id]);
+      const m =  new MineMap(attr, this.map, id, this);
+      m.addLayer();
+      const bounds = m.layer.getBounds();
+      this.map.fitBounds(bounds);
+    }
+    
     addMapControls() {
       // const layerControls = L.Control();
       // layerControls.setPosition("topright");
@@ -296,8 +352,8 @@ class MapCtrl {
 
             container.innerHTML = `<nav class="nav nav-pills flex-column flex-sm-row social-bar">
             <a class="flex-sm-fill text-sm-center nav-link prev map-share" aria-current="page" >Share</a>
-            <a class="flex-sm-fill text-sm-center nav-link prev map-clear">Original Map</a>
-            <a class="flex-sm-fill text-sm-center nav-link prev map-reset">Reset Map</a>
+            <a class="flex-sm-fill text-sm-center nav-link prev map-clear">Clear Map</a>
+            <a class="flex-sm-fill text-sm-center nav-link prev map-bookmarks">Bookmarks</a>
             <a class="flex-sm-fill text-sm-center nav-link prev" href="#">About</a>
           </nav>`
     
@@ -334,13 +390,21 @@ class MapCtrl {
         };
       }
 
-      const resets = document.getElementsByClassName("map-reset");
+      // const resets = document.getElementsByClassName("map-reset");
+      // for(const reset of resets) {
+      //   reset.onclick = (e) => {
+      //     e.stopPropagation();
+      //     const url = new URL(window.location.href);
+      //     history.pushState({}, "Home", `${url.origin}${url.pathname}`);
+      //     this.reset();
+      //   };
+      // }
+
+      const resets = document.getElementsByClassName("map-bookmarks");
       for(const reset of resets) {
         reset.onclick = (e) => {
           e.stopPropagation();
-          const url = new URL(window.location.href);
-          history.pushState({}, "Home", `${url.origin}${url.pathname}`);
-          this.reset();
+          this.populateBookmarks();
         };
       }
     }
@@ -366,9 +430,6 @@ class MapCtrl {
       this.map.on('locationfound', (e) => this.locationOnRequest(e));
     }
 
-    addLayerControl() {
-
-    }
 
     rekeyLayers(layers) {
       const rekeyed = {};
@@ -379,6 +440,7 @@ class MapCtrl {
     }
 
     addLayer(layer) {
+
       this.layerGroup.addLayer(layer.layer);
       this.chooser.addOverlay(layer.layer, layer.WMSName);
       const rekey = this.rekeyLayers(this.layerGroup.getLayers());
@@ -404,6 +466,19 @@ class MapCtrl {
 
     removeLayer(layer) {
       this.layerGroup.removeLayer(layer.layer);
+    }
+
+    removeLayerByName(name) {
+      const layers = this.layerGroup._layers;
+     
+      for(const layer_id in layers) {
+        const layer = layers[layer_id];
+        console.log(layer._minemapname, name);
+        if(layer._minemapname == name) {
+          this.layerGroup.removeLayer(layer);
+          this.chooser._recountLayers();
+        }
+      }
     }
 
     clearMapModal() {

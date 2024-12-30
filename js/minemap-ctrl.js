@@ -527,7 +527,7 @@ class MapCtrl {
           }
         }
       
-        const url = "https://apps.pasda.psu.edu/arcgis/rest/services/MineMaps/MapServer/identify";
+        const url = "https://apps.pasda.psu.edu/arcgis/rest/services/MineMaps2/MapServer/identify";
         const u = new URL(url);
         u.search  = new URLSearchParams(data).toString()
         const response = await fetch(u)
